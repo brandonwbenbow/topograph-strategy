@@ -1,5 +1,5 @@
 // import { invoke } from "@tauri-apps/api/tauri";
-import { Renderer } from './render';
+import { Renderer } from './game/demo';
 
 // let greetInputEl: HTMLInputElement | null;
 // let greetMsgEl: HTMLElement | null;
@@ -16,8 +16,4 @@ import { Renderer } from './render';
 var app: Renderer | null = null;
 window.addEventListener("DOMContentLoaded", () => {
   app = new Renderer();
-  // setInterval(() => {
-  //   console.clear();
-  // }, 5000);
-  // console.log(window);
 });

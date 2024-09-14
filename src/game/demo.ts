@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { getWindowAspect } from './helper';
+import { getWindowAspect } from '../util/helper';
 import { OrbitControls, SimplexNoise } from 'three/examples/jsm/Addons.js';
 
 const topo = new THREE.ShaderMaterial({
