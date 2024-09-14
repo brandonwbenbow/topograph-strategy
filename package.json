@@ -1,0 +1,24 @@
+{
+  "name": "js-strategy",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^1",
+    "simplex-noise": "^4.0.3",
+    "three": "^0.168.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1",
+    "@types/three": "^0.168.0",
+    "concurrently": "^8.2.2",
+    "typescript": "^5.2.2",
+    "vite": "^5.3.1"
+  }
+}
