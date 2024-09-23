@@ -7,7 +7,7 @@ import { SimplexNoise } from "three/examples/jsm/Addons.js";
 export class TerrainManager {
   constructor() {}
 
-  public generateTerrainMap() {
+  public async generateTerrainMap() {
     return new TerrainMap();
   }
 }
