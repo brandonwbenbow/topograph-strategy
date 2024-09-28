@@ -16,4 +16,5 @@ import { Renderer } from './game/demo';
 var app: Renderer | null = null;
 window.addEventListener("DOMContentLoaded", () => {
   app = new Renderer();
+  app.start();
 });

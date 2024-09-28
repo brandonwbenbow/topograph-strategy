@@ -1,4 +1,4 @@
-import { WebGLRenderer } from "three";
+import { Clock, WebGLRenderer } from "three";
 import { GameScene } from "./classes/Scene";
 import { GameCamera } from "./classes/Camera";
 
@@ -8,6 +8,7 @@ type MetaObject = GameScene | GameCamera;
 
 export class Renderer {
   private renderer: WebGLRenderer;
+  private clock: Clock;
 
   private scenes: Map<string, GameScene> = new Map<string, GameScene>();
   private activeScene: GameScene | undefined;
@@ -17,9 +18,16 @@ export class Renderer {
 
   constructor() {
     this.renderer = new WebGLRenderer();
+    this.clock = new Clock();
   }
 
-  public animate(delta: number, options?: AnimateOptions) {
+  public start() {
+    this.renderer.setAnimationLoop(() => {
+      this.animate(this.clock.getDelta());
+    });
+  }
+
+  private animate(delta: number, _options?: AnimateOptions) {
     if(this.activeScene && this.activeCamera) {
       this.renderer.render(this.activeScene, this.activeCamera);
       

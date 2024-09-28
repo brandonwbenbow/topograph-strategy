@@ -16,7 +16,7 @@ export class TerrainManager {
  * Map for terrain segments representing a single piece of land.
  */
 export class TerrainMap {
-  private mapGrid: Terrain[][] = [];
+  // private mapGrid: Terrain[][] = [];
 
   constructor() {}
 }
@@ -25,12 +25,12 @@ export class TerrainMap {
  * Single terrain mesh extended from THREE.Mesh.
  */
 export class Terrain extends Mesh {
-  private noise: MapNoise;
+  // private noise: MapNoise;
 
   constructor() {
     super();
 
-    this.noise = new MapNoise();
+    // this.noise = new MapNoise();
   }
 }
 
@@ -51,7 +51,7 @@ export class MapNoise {
     this.computedLayers = settings?.layers ?? [];
   }
 
-  public applyToGeometry(noise: NoiseWrapper, geometry: BufferGeometry, density = 100) {
+  public applyToGeometry(noise: NoiseWrapper, geometry: BufferGeometry, _density = 100) {
     const verts = geometry.getAttribute('position');
     for(let i = 0; i < verts.count; i++) {
       verts.setZ(i, this.getValueFromLayers(noise, verts.getX(i), verts.getY(i)))

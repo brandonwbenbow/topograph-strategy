@@ -5,7 +5,8 @@ import { OrbitControls, SimplexNoise } from 'three/examples/jsm/Addons.js';
 const topo = new THREE.ShaderMaterial({
   name: 'Topo Shader',
 	uniforms: {
-    time: { value: 1.0 }
+    time: { value: 1.0 },
+    lines: { value: 5.5 }
   },
 
 	vertexShader: `
@@ -19,10 +20,11 @@ const topo = new THREE.ShaderMaterial({
 
 	fragmentShader: `
     varying vec3 vertex;
+    uniform float lines;
 
     void main() {
       // Pick a coordinate to visualize in a grid
-      float coord = vertex.z;
+      float coord = vertex.z * lines;
 
       // Compute anti-aliased world-space grid lines
       float line = abs(fract(coord - 0.5) - 0.5) / fwidth(coord);
@@ -37,18 +39,18 @@ const topo = new THREE.ShaderMaterial({
   `
 });
 
-const flat = new THREE.MeshPhongMaterial({ 
-  name: 'Flat Material',
+// const flat = new THREE.MeshPhongMaterial({ 
+//   name: 'Flat Material',
 
-  // color: 0x33ff33,
-  // specular: 0x773300,
-  side: THREE.DoubleSide,
-  flatShading: true,
-  shininess: 10,
+//   // color: 0x33ff33,
+//   // specular: 0x773300,
+//   side: THREE.DoubleSide,
+//   flatShading: true,
+//   shininess: 10,
   
-  // wireframe: true,
-  // wireframeLinewidth: 1
-})
+//   // wireframe: true,
+//   // wireframeLinewidth: 1
+// })
 
 export class Renderer {
   _renderer: THREE.WebGLRenderer;
@@ -137,6 +139,10 @@ export class Renderer {
     new OrbitControls(this._camera, this._renderer.domElement);
   }
 
+  start() {
+
+  }
+
   animate(delta: number) {
     this._renderer.render(this._scene, this._camera);
     if(this._autoGenTerrain) {
@@ -151,8 +157,8 @@ export class Renderer {
     }
   }
 
-  generateTerrain(width: number = 8, height: number = 8) {
-    const geometry = new THREE.PlaneGeometry(width, height, 150, 150);
+  generateTerrain(width: number = 16, height: number = 16) {
+    const geometry = new THREE.PlaneGeometry(width, height, 350, 350);
     const verts = geometry.getAttribute('position');
 
     const noiseSettings: MapNoise[] = [
@@ -168,9 +174,10 @@ export class Renderer {
 
     MapGenerator.initalize(undefined, undefined, ...noiseSettings);
 
+    const area = Math.sqrt(verts.count) / 350;
     for(let i = 0; i < verts.count; i++) {
       const loc = { x: verts.getX(i), y: verts.getY(i) }
-      verts.setZ(i, MapGenerator.getValue(loc.x, loc.y));
+      verts.setZ(i, MapGenerator.getValue(loc.x, loc.y, area));
     }
 
     const mesh = new THREE.Mesh(geometry, topo);
@@ -286,7 +293,8 @@ class MapGenerator {
     MapGenerator.bakeNoise(settings, layers, ...noises);
   }
 
-  static getValue = (xin: number, yin: number) => {
+  static getValue = (xin: number, yin: number, vertCount: number) => {
+    const distFromCenter = -1 * (((xin**2 + yin**2) / 2) - (vertCount)) / 18;
     const length = MapGenerator._noises.length;
     const totalWeight = MapGenerator._noises.map((noise) => noise.weight ?? 1).reduce((p, c) => p + c, 0);
     const noiseValue = MapGenerator._noises.map((noise) => this._simplex.noise(
@@ -295,7 +303,7 @@ class MapGenerator {
     ) * noise.elevationScale * ((noise.weight ?? 1) / totalWeight)).reduce((p, c) => p + c, 0) / (length);
 
     var value = noiseValue * (this._settings?.elevationScale ?? 1);
-    value = value - (value / 2);
+    value = (value / 2) + distFromCenter;
 
     // if(this._settings !== null) {
     //   // const centeredValue = Math.abs(xin / 2 - (this._settings.width / 2)) + Math.abs(yin / 2 - (this._settings.length / 2));
