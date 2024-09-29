@@ -157,8 +157,8 @@ export class Renderer {
     }
   }
 
-  generateTerrain(width: number = 16, height: number = 16) {
-    const geometry = new THREE.PlaneGeometry(width, height, 350, 350);
+  generateTerrain(width: number = 16, height: number = 16, density: number = 300) {
+    const geometry = new THREE.PlaneGeometry(width, height, density, density);
     const verts = geometry.getAttribute('position');
 
     const noiseSettings: MapNoise[] = [
@@ -174,10 +174,11 @@ export class Renderer {
 
     MapGenerator.initalize(undefined, undefined, ...noiseSettings);
 
-    const area = Math.sqrt(verts.count) / 350;
+    const area = Math.sqrt(verts.count) / density;
+    const smooth = 2;
     for(let i = 0; i < verts.count; i++) {
       const loc = { x: verts.getX(i), y: verts.getY(i) }
-      verts.setZ(i, MapGenerator.getValue(loc.x, loc.y, area));
+      verts.setZ(i, MapGenerator.getValue(loc.x, loc.y, area) / smooth);
     }
 
     const mesh = new THREE.Mesh(geometry, topo);
@@ -293,8 +294,8 @@ class MapGenerator {
     MapGenerator.bakeNoise(settings, layers, ...noises);
   }
 
-  static getValue = (xin: number, yin: number, vertCount: number) => {
-    const distFromCenter = -1 * (((xin**2 + yin**2) / 2) - (vertCount)) / 18;
+  static getValue = (xin: number, yin: number, _vertCount: number) => {
+    // const distFromCenter = -1 * (((xin**2 + yin**2) / 2) - (vertCount)) / 18;
     const length = MapGenerator._noises.length;
     const totalWeight = MapGenerator._noises.map((noise) => noise.weight ?? 1).reduce((p, c) => p + c, 0);
     const noiseValue = MapGenerator._noises.map((noise) => this._simplex.noise(
@@ -303,13 +304,6 @@ class MapGenerator {
     ) * noise.elevationScale * ((noise.weight ?? 1) / totalWeight)).reduce((p, c) => p + c, 0) / (length);
 
     var value = noiseValue * (this._settings?.elevationScale ?? 1);
-    value = (value / 2) + distFromCenter;
-
-    // if(this._settings !== null) {
-    //   // const centeredValue = Math.abs(xin / 2 - (this._settings.width / 2)) + Math.abs(yin / 2 - (this._settings.length / 2));
-    //   const centeredValue = 
-    // }
-
     return value;
   }
 }
