@@ -8,6 +8,7 @@ type MetaObject = GameScene | GameCamera;
 
 export class Renderer {
   private renderer: WebGLRenderer;
+  private isRunning: boolean;
   private clock: Clock;
 
   private scenes: Map<string, GameScene> = new Map<string, GameScene>();
@@ -18,13 +19,18 @@ export class Renderer {
 
   constructor() {
     this.renderer = new WebGLRenderer();
+    this.isRunning = false;
     this.clock = new Clock();
   }
 
   public start() {
-    this.renderer.setAnimationLoop(() => {
-      this.animate(this.clock.getDelta());
-    });
+    this.renderer.setAnimationLoop(() => this.animate(this.clock.getDelta()));
+    this.isRunning = true;
+  }
+
+  public pause() {
+    this.renderer.setAnimationLoop(() => {});
+    this.isRunning = false;
   }
 
   private animate(delta: number, _options?: AnimateOptions) {

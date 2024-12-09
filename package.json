@@ -8,16 +8,16 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "tauri:dev": "tauri"
+    "tauri:dev": "tauri dev"
   },
   "dependencies": {
     "@tauri-apps/api": "^1",
     "simplex-noise": "^4.0.3",
-    "three": "^0.169.0"
+    "three": "^0.170.0"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1",
-    "@types/three": "^0.169.0",
+    "@types/three": "^0.170.0",
     "concurrently": "^8.2.2",
     "typescript": "^5.2.2",
     "vite": "^5.3.1"

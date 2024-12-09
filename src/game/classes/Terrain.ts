@@ -1,4 +1,4 @@
-import { BufferGeometry, Mesh, Vector2, Vector3 } from "three"
+import { BufferGeometry, Object3D, Vector2, Vector3, BatchedMesh } from "three";
 import { SimplexNoise } from "three/examples/jsm/Addons.js";
 
 /**
@@ -16,21 +16,33 @@ export class TerrainManager {
  * Map for terrain segments representing a single piece of land.
  */
 export class TerrainMap {
-  // private mapGrid: Terrain[][] = [];
+  private mapGrid: Map<[number, number], Terrain> = new Map();
 
   constructor() {}
+
+  public setMapToGrid(terrain: Terrain) {
+    const pos: Vector3 = (terrain as Object3D).position;
+    this.mapGrid.set([pos.x, pos.y], terrain);
+  }
 }
 
 /**
  * Single terrain mesh extended from THREE.Mesh.
  */
-export class Terrain extends Mesh {
-  // private noise: MapNoise;
+export class Terrain extends Object3D {
+  private mesh: BatchedMesh;
+  private noise: MapNoise;
 
-  constructor() {
+  static generateMeshFromNoise(noise: MapNoise) {
+    return new BatchedMesh();
+  }
+
+  constructor({ pos, mesh, noise }: { pos: Vector3, mesh?: BatchedMesh, noise?: MapNoise }) {
     super();
 
-    // this.noise = new MapNoise();
+    const defaultLayers = [{ terrain: { offset: pos, scale: Vector3.ONE, weight: 1 } }]
+    this.noise = noise ?? new MapNoise({ layers: defaultLayers });
+    this.mesh = mesh ?? Terrain.generateMeshFromNoise(this.noise);
   }
 }
 
