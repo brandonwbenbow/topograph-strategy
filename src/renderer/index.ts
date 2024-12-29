@@ -1,21 +1,12 @@
-import { Clock, Controls, WebGLRenderer } from "three";
+import { Clock, WebGLRenderer } from "three";
 import { GameScene } from "./classes/Scene";
 import { GameCamera } from "./classes/Camera";
 import { GUIManager } from "./classes/GUI";
-
-type AnimateOptions = {}
+import { AnimateOptions, Engine, RendererOptions, RendererState } from "../types";
 
 type MetaObject = GameScene | GameCamera;
 
-type RendererOptions = {
-  guiRootElementID: string
-}
-
-type RendererState =  {
-  isRunning: boolean
-}
-
-export class Renderer {
+export class Renderer implements Engine {
   private renderer: WebGLRenderer;
   private clock: Clock;
 
@@ -25,7 +16,6 @@ export class Renderer {
   private scenes: Map<string, GameScene> = new Map<string, GameScene>();
   private activeScene: GameScene | undefined;
 
-  private controls: unknown | undefined;
   private cameras: Map<string, GameCamera> = new Map<string, GameCamera>();
   private activeCamera: GameCamera | undefined;
 
@@ -40,7 +30,7 @@ export class Renderer {
     this.gui = new GUIManager(document.getElementById(options?.guiRootElementID ?? 'gui-root'));
   }
 
-  private animate(delta: number, _options?: AnimateOptions) {
+  protected animate(delta: number, _options?: AnimateOptions) {
     if(this.activeScene && this.activeCamera) {
       this.renderer.render(this.activeScene, this.activeCamera);
       

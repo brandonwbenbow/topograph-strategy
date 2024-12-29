@@ -1,4 +1,4 @@
-import { ShaderMaterial } from 'three';
+import { ShaderMaterial, MeshPhongMaterial, DoubleSide, ColorRepresentation } from 'three';
 
 export const TopographicalShader = new ShaderMaterial({
   name: 'Topo Shader',
@@ -36,3 +36,16 @@ export const TopographicalShader = new ShaderMaterial({
     }
   `
 });
+
+export const FlatMaterial = (color?: ColorRepresentation ) => new MeshPhongMaterial({ 
+  name: 'Flat Material',
+
+  color: color ?? 0x33ff33,
+  // specular: 0x773300,
+  side: DoubleSide,
+  flatShading: true,
+  shininess: 10,
+  
+  // wireframe: true,
+  // wireframeLinewidth: 1
+})

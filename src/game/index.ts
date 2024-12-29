@@ -3,11 +3,13 @@ import { Renderer } from "../renderer";
 import { GameCamera } from "../renderer/classes/Camera";
 import { GameScene } from "../renderer/classes/Scene";
 import { TerrainManager } from "./classes/Terrain";
+import { Engine } from "../types";
 
 import { Renderer as DemoRenderer } from './demo';
-export { DemoRenderer }
+import { MeshTest } from "./test";
+export { DemoRenderer, MeshTest }
 
-export class GameEngine {
+export class GameEngine implements Engine {
   // Engine
   private renderer: Renderer;
 

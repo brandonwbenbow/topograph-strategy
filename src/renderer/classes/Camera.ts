@@ -9,7 +9,8 @@ export class GameCamera extends Camera {
   private _key: string;
   public get key() { return this._key };
 
-  private controls: unknown | undefined;
+  private _controls: unknown | undefined;
+  protected get controls() { return this._controls }
 
   public onRender: (delta: number) => void;
 
@@ -22,6 +23,6 @@ export class GameCamera extends Camera {
   }
 
   public setControls<T>(controls: unknown) {
-    this.controls = controls as T;
+    this._controls = controls as T;
   }
 }

@@ -1,5 +1,6 @@
 // import { invoke } from "@tauri-apps/api/tauri";
-import { GameEngine, DemoRenderer } from './game';
+import { GameEngine, DemoRenderer, MeshTest } from './game';
+import { Engine } from './types';
 
 // let greetInputEl: HTMLInputElement | null;
 // let greetMsgEl: HTMLElement | null;
@@ -13,16 +14,21 @@ import { GameEngine, DemoRenderer } from './game';
 //   }
 // }
 
-var app: GameEngine | DemoRenderer | null = null;
+var app: Engine | null = null;
 window.addEventListener("DOMContentLoaded", () => {
   switch(window.location.pathname) {
     case '/demo':
       app = new DemoRenderer();
       app.start();
       break;
+    case '/test':
+      app = new MeshTest();
+      app.start();
+      break;
     case '/':
     default:
       app = new GameEngine();
       app.start();
+      break;
   }
 });

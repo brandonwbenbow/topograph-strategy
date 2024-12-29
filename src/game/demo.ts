@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { getWindowAspect } from '../util/helper';
 import { OrbitControls, SimplexNoise } from 'three/examples/jsm/Addons.js';
 import { TopographicalShader as topo } from './shaders';
+import { Engine } from '../types';
 
 // const flat = new THREE.MeshPhongMaterial({ 
 //   name: 'Flat Material',
@@ -16,7 +17,7 @@ import { TopographicalShader as topo } from './shaders';
 //   // wireframeLinewidth: 1
 // })
 
-export class Renderer {
+export class Renderer implements Engine {
   _renderer: THREE.WebGLRenderer;
   _scene: THREE.Scene;
   _camera: THREE.PerspectiveCamera;
