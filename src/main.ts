@@ -1,5 +1,5 @@
 // import { invoke } from "@tauri-apps/api/tauri";
-import { Renderer } from './game/demo';
+import { GameEngine, DemoRenderer } from './game';
 
 // let greetInputEl: HTMLInputElement | null;
 // let greetMsgEl: HTMLElement | null;
@@ -13,8 +13,16 @@ import { Renderer } from './game/demo';
 //   }
 // }
 
-var app: Renderer | null = null;
+var app: GameEngine | DemoRenderer | null = null;
 window.addEventListener("DOMContentLoaded", () => {
-  app = new Renderer();
-  app.start();
+  switch(window.location.pathname) {
+    case '/demo':
+      app = new DemoRenderer();
+      app.start();
+      break;
+    case '/':
+    default:
+      app = new GameEngine();
+      app.start();
+  }
 });

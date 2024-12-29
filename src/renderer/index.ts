@@ -1,36 +1,43 @@
-import { Clock, WebGLRenderer } from "three";
+import { Clock, Controls, WebGLRenderer } from "three";
 import { GameScene } from "./classes/Scene";
 import { GameCamera } from "./classes/Camera";
+import { GUIManager } from "./classes/GUI";
 
 type AnimateOptions = {}
 
 type MetaObject = GameScene | GameCamera;
 
+type RendererOptions = {
+  guiRootElementID: string
+}
+
+type RendererState =  {
+  isRunning: boolean
+}
+
 export class Renderer {
   private renderer: WebGLRenderer;
-  private isRunning: boolean;
   private clock: Clock;
+
+  private state: RendererState;
+  private gui: GUIManager;
 
   private scenes: Map<string, GameScene> = new Map<string, GameScene>();
   private activeScene: GameScene | undefined;
 
+  private controls: unknown | undefined;
   private cameras: Map<string, GameCamera> = new Map<string, GameCamera>();
   private activeCamera: GameCamera | undefined;
 
-  constructor() {
+  constructor(options?: Partial<RendererOptions>) {
     this.renderer = new WebGLRenderer();
-    this.isRunning = false;
     this.clock = new Clock();
-  }
 
-  public start() {
-    this.renderer.setAnimationLoop(() => this.animate(this.clock.getDelta()));
-    this.isRunning = true;
-  }
+    this.state = { 
+      isRunning: false 
+    }
 
-  public pause() {
-    this.renderer.setAnimationLoop(() => {});
-    this.isRunning = false;
+    this.gui = new GUIManager(document.getElementById(options?.guiRootElementID ?? 'gui-root'));
   }
 
   private animate(delta: number, _options?: AnimateOptions) {
@@ -41,6 +48,24 @@ export class Renderer {
       this.activeCamera.onRender(delta);
     }
   }
+
+  private setState(obj: Partial<RendererState>) {
+    this.state = { ...this.state, ...obj }
+  }
+
+  public start() {
+    this.renderer.setAnimationLoop(() => this.animate(this.clock.getDelta()));
+    this.setState({ isRunning: true });
+  }
+
+  public pause() {
+    this.renderer.setAnimationLoop(() => {});
+    this.setState({ isRunning: false });
+  }
+
+  public updateGUI<T>(state: unknown) { this.gui.updateState<T>(state); }
+
+  public getCanvasElement() { return this.renderer.domElement; }
 
   // #region Meta Objects
   private addMetaObjectToMap(key: string, obj: MetaObject, map: Map<string, MetaObject>): boolean {
@@ -99,7 +124,7 @@ export class Renderer {
     return this.removeMetaObjectFromMap(camera, this.cameras);
   }
 
-  public setActiveCamera(camera: GameCamera | string): boolean {
+  public setActiveCamera<T>(camera: GameCamera | string): boolean {
     return this.setActiveMetaObjectFromMap(camera, this.cameras, (activeCamera) => {
       this.activeCamera = activeCamera as GameCamera | undefined;
       return this.activeCamera !== undefined;

@@ -1,14 +1,17 @@
-import { BufferGeometry, Object3D, Vector2, Vector3, BatchedMesh } from "three";
+import { BufferGeometry, Object3D, Vector3, BatchedMesh } from "three";
 import { SimplexNoise } from "three/examples/jsm/Addons.js";
 
 /**
  * Instance for managing terrain generation.
  */
 export class TerrainManager {
+  private currentTerrainMap: TerrainMap | undefined;
+
   constructor() {}
 
   public async generateTerrainMap() {
-    return new TerrainMap();
+    this.currentTerrainMap = new TerrainMap();
+    return this.currentTerrainMap;
   }
 }
 
@@ -24,6 +27,10 @@ export class TerrainMap {
     const pos: Vector3 = (terrain as Object3D).position;
     this.mapGrid.set([pos.x, pos.y], terrain);
   }
+
+  public getTerrainMesh(): BatchedMesh[] {
+    return Array.from(this.mapGrid.values()).map((terrain) => terrain.getMesh());
+  }
 }
 
 /**
@@ -33,17 +40,19 @@ export class Terrain extends Object3D {
   private mesh: BatchedMesh;
   private noise: MapNoise;
 
-  static generateMeshFromNoise(noise: MapNoise) {
-    return new BatchedMesh();
+  static generateMeshFromNoise(noise: MapNoise, maxTileCount: number = 100) {
+    return new BatchedMesh(maxTileCount, noise.getMeshScale() * maxTileCount);
   }
 
   constructor({ pos, mesh, noise }: { pos: Vector3, mesh?: BatchedMesh, noise?: MapNoise }) {
     super();
 
-    const defaultLayers = [{ terrain: { offset: pos, scale: Vector3.ONE, weight: 1 } }]
+    const defaultLayers: NoiseLayerSettings[] = [{ terrain: { offset: pos, scale: new Vector3(1, 1, 1), weight: 1 } }]
     this.noise = noise ?? new MapNoise({ layers: defaultLayers });
     this.mesh = mesh ?? Terrain.generateMeshFromNoise(this.noise);
   }
+
+  public getMesh() { return this.mesh; }
 }
 
 /**
@@ -51,16 +60,15 @@ export class Terrain extends Object3D {
  * Contains list of NoiseSettings to manage complex noise generation.
  */
 export class MapNoise {
-  private computedLayers: NoiseLayerSettings[];
-  private elevationBounds: Vector2;
+  private settings: MapNoiseSettings;
 
-  constructor(settings?: MapNoiseSettings) {
-    this.elevationBounds = new Vector2(
-      settings?.minElevation ?? 0, 
-      settings?.maxElevation ?? 10
-    );
-
-    this.computedLayers = settings?.layers ?? [];
+  constructor(settings: Partial<MapNoiseSettings>) {
+    this.settings = {
+      minElevation: settings?.minElevation ?? 0,
+      maxElevation: settings?.maxElevation ?? 10,
+      layers: settings?.layers ?? [],
+      meshDensity: settings?.meshDensity ?? 100,
+    };
   }
 
   public applyToGeometry(noise: NoiseWrapper, geometry: BufferGeometry, _density = 100) {
@@ -73,27 +81,31 @@ export class MapNoise {
   }
 
   public getValueFromLayers(noise: NoiseWrapper, xin: number, yin: number) {
-    const tw = this.computedLayers.map((layer) => layer.terrain.weight).reduce((p, c) => p + c, 0);
-    const value = this.computedLayers.map((layer) => {
+    const layers = this.settings.layers ?? [];
+    const tw = layers.map((layer) => layer.terrain.weight).reduce((p, c) => p + c, 0);
+    const value = layers.map((layer) => {
       const level = noise(
         (xin + layer.terrain.offset.x) * layer.terrain.scale.x, 
         (yin + layer.terrain.offset.y) * layer.terrain.scale.y
       ) * layer.terrain.scale.z * (layer.terrain.weight / tw);
 
-      return Math.min(this.elevationBounds.y, Math.max(this.elevationBounds.x, level));
+      return Math.min(this.settings.minElevation, Math.max(this.settings.maxElevation, level));
     }).reduce((p, c) => p + c, 0);
 
     return value;
   }
+
+  public getMeshScale() { return this.settings.meshDensity; }
 }
 
 /**
  * Settings for managing MapNoise interface.
  */
 export type MapNoiseSettings = {
-  minElevation?: number
-  maxElevation?: number
-  layers?: NoiseLayerSettings[]
+  minElevation: number
+  maxElevation: number
+  layers: NoiseLayerSettings[]
+  meshDensity: number
 }
 
 type NoiseLayerSettings = {
@@ -108,7 +120,7 @@ type NoiseLayerSettings = {
  * General settings directly tied to noise inputs.
  */
 export type NoiseSettings = {
-  offset: Vector2
+  offset: Vector3
   scale: Vector3
   weight: number
 }
