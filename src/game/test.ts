@@ -1,20 +1,37 @@
-import { AmbientLight, BoxGeometry, Camera, Clock, Color, ColorRepresentation, Mesh, Object3D, PerspectiveCamera, PlaneGeometry, Scene, WebGLRenderer } from "three";
+import { AmbientLight, BoxGeometry, Camera, Clock, Color, ColorRepresentation, Mesh, Object3D, PerspectiveCamera, PlaneGeometry, Scene, Vector2, Vector3, WebGLRenderer } from "three";
 import { AnimateOptions, Renderer } from "../types";
 import { SimplexNoise } from "three/examples/jsm/math/SimplexNoise.js";
 import { FlatMaterial } from "./shaders";
 import { OrbitControls } from "three/examples/jsm/Addons.js";
-import { getWindowAspect } from "../util/helper";
+import { addWindowEvents, getWindowAspect, VectorFromWASD } from "../util/helper";
 
+type TriggerEvent = {
+  value: Vector2,
+  initialTrigger: boolean
+}
+
+type TouchEvent = TriggerEvent & {
+  held: boolean
+}
 
 export class MeshTest extends Renderer {
   _renderer: WebGLRenderer;
   _scenes: Map<string, Scene>;
   _cameras: Map<string, Camera>;
+  _point: { controls?: OrbitControls, object: Object3D };
   _state: {
     clock: Clock,
     scene: string | undefined,
     camera: string | undefined
   }
+
+  _keys: { [key: string]: { value: boolean, count: number } | undefined }
+  _inputs: {
+    inputAxis: TriggerEvent,
+    touchAxis: TouchEvent
+  }
+
+  _clearEvents: () => void = () => {}
 
   constructor() { 
     super(); 
@@ -22,10 +39,17 @@ export class MeshTest extends Renderer {
     this._renderer = new WebGLRenderer();
     this._scenes = new Map<string, Scene>();
     this._cameras = new Map<string, Camera>();
+    this._point = { object: new Object3D() };
     this._state = {
       clock: new Clock(),
       scene: undefined,
       camera: undefined
+    }
+
+    this._keys = {};
+    this._inputs = {
+      inputAxis: { value: new Vector2(), initialTrigger: false },
+      touchAxis: { value: new Vector2(), initialTrigger: false, held: false }
     }
 
     this._renderer.setSize(window.innerWidth, window.innerHeight);
@@ -37,10 +61,16 @@ export class MeshTest extends Renderer {
   }
 
   public start() {
+    this._clearEvents();
+
     const camera = new PerspectiveCamera(75, getWindowAspect(), 0.1, 1000);
     camera.position.z = 5;
     camera.position.y = 3;
-    new OrbitControls(camera, this._renderer.domElement);
+    this._point.controls = new OrbitControls(camera, this._renderer.domElement);
+    // this._point.controls.keys = { LEFT: 'KeyA', UP: 'KeyW', RIGHT: 'KeyD', BOTTOM: 'KeyS' }
+    this._point.controls.addEventListener('change', () => {
+      this._point.controls?.target.setY(0);
+    })
     this.addCamera("default_camera", camera);
 
     const scene = new Scene();
@@ -49,15 +79,19 @@ export class MeshTest extends Renderer {
     scene.add(new AmbientLight(0xffffff, 5));
     this.addScene("default_scene", scene);
 
-    const box = new Mesh(new BoxGeometry(), FlatMaterial(0x234567));
-    box.position.set(0, 1, 0);
-    scene.add(box);
+    this._point.object.add(new Mesh(new BoxGeometry(), FlatMaterial()));
+    // this._point.object.add(camera);
+    scene.add(this._point.object);
+
+    const inputCallback = (event: any) => {
+      this.onInput(event.type, new Vector2(event.clientX, event.clientY), event);
+    }
+
+    this._clearEvents = addWindowEvents(inputCallback, 'mousemove', 'click', 'touch', 'keydown', 'keyup');
 
     this._renderer.setAnimationLoop(() => {
       this.animate(this._state.clock.getDelta());
     });
-
-    console.log("Map:", map);
   }
 
   public animate(delta: number, _options?: AnimateOptions): void {
@@ -65,7 +99,53 @@ export class MeshTest extends Renderer {
       this._renderer.render(this._scenes.get(this._state.scene)!, this._cameras.get(this._state.camera)!)
     }
 
-    // on render
+    this.update(delta);
+  }
+
+  protected update(delta: number) {
+    // using input object, perform actions
+    const pos = this._point.controls?.target;
+    this._point.object.position.set(pos?.x ?? 0, pos?.y ?? 0, pos?.z ?? 0);
+
+    // if(this._inputs.inputAxis.value.length() !== 0) {
+    //   const moveInputs = new Vector3(this._inputs.inputAxis.value.x * delta, 0, this._inputs.inputAxis.value.y * delta);
+    // }
+  }
+
+  protected onInput(type: 'mousemove' | 'click' | 'touch' | 'keydown' | 'keyup', screenPosition: Vector2, event: any) {
+    this._inputs.inputAxis.initialTrigger = false;
+    this._inputs.touchAxis.initialTrigger = false;
+
+    // const getWASD = () => {
+    //   return VectorFromWASD(
+    //     this._keys['KeyW']?.value, 
+    //     this._keys['KeyA']?.value, 
+    //     this._keys['KeyS']?.value, 
+    //     this._keys['KeyD']?.value
+    //   );
+    // }
+
+    // const onKey = (code: string, down: boolean, addCount: number) => {
+    //   this._keys[code] = { value: down, count: (this._keys[code]?.count ?? 0) + addCount }
+    //   if(['KeyW', 'KeyA', 'KeyS', 'KeyD'].includes(event.code)) {
+    //     this._inputs.inputAxis = { value: getWASD(), initialTrigger: true }
+    //   }
+    // }
+
+    switch(type) {
+      case 'mousemove':
+        break;
+      case 'click':
+        break;
+      case 'touch':
+        break;
+      case 'keydown':
+        // onKey(event.code, true, 1);
+        break;
+      case 'keyup':
+        // onKey(event.code, false, 0);
+        break;
+    }
   }
 
   public addCamera(key: string, camera: Camera) {
@@ -94,8 +174,8 @@ function getTerrainMap(width = 11, height = 11): Object3D {
 
   for(let x = half_w - width; x < half_w; x++) {
     for(let y = half_h - height; y < half_h; y++) {
-      const value = 255 - Math.abs(x + y);
-      const color = new Color().setRGB(value / 2, value, value / 2)
+      const value = (255 - Math.abs(x + y)) / 255;
+      const color = new Color().setRGB(value * Math.random(), value * Math.random(), value * Math.random());
       const mesh = generateTerrain(width, height, 100, color);
       mesh.position.set(x * width, 0, y * height);
       obj.add(mesh);
