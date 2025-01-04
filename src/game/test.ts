@@ -67,10 +67,11 @@ export class MeshTest extends Renderer {
     camera.position.z = 5;
     camera.position.y = 3;
     this._point.controls = new OrbitControls(camera, this._renderer.domElement);
-    // this._point.controls.keys = { LEFT: 'KeyA', UP: 'KeyW', RIGHT: 'KeyD', BOTTOM: 'KeyS' }
-    this._point.controls.addEventListener('change', () => {
-      this._point.controls?.target.setY(0);
-    })
+    this._point.controls.screenSpacePanning = false;
+    this._point.controls.minDistance = 10;
+    this._point.controls.maxDistance = 500;
+    this._point.controls.maxPolarAngle = Math.PI / 2;
+
     this.addCamera("default_camera", camera);
 
     const scene = new Scene();
