@@ -3,33 +3,20 @@ import { AnimateOptions, Renderer } from "../types";
 import { SimplexNoise } from "three/examples/jsm/math/SimplexNoise.js";
 import { FlatMaterial } from "./shaders";
 import { OrbitControls } from "three/examples/jsm/Addons.js";
-import { addWindowEvents, getWindowAspect, VectorFromWASD } from "../util/helper";
-
-type TriggerEvent = {
-  value: Vector2,
-  initialTrigger: boolean
-}
-
-type TouchEvent = TriggerEvent & {
-  held: boolean
-}
+import { addWindowEvents, getWindowAspect } from "../util/helper";
+import { InputMap } from "./classes/InputMap";
 
 export class MeshTest extends Renderer {
   _renderer: WebGLRenderer;
   _scenes: Map<string, Scene>;
   _cameras: Map<string, Camera>;
   _point: { controls?: OrbitControls, object: Object3D };
+  _input: InputMap;
   _state: {
     clock: Clock,
     scene: string | undefined,
     camera: string | undefined
-  }
-
-  _keys: { [key: string]: { value: boolean, count: number } | undefined }
-  _inputs: {
-    inputAxis: TriggerEvent,
-    touchAxis: TouchEvent
-  }
+  };
 
   _clearEvents: () => void = () => {}
 
@@ -40,16 +27,11 @@ export class MeshTest extends Renderer {
     this._scenes = new Map<string, Scene>();
     this._cameras = new Map<string, Camera>();
     this._point = { object: new Object3D() };
+    this._input = new InputMap();
     this._state = {
       clock: new Clock(),
       scene: undefined,
       camera: undefined
-    }
-
-    this._keys = {};
-    this._inputs = {
-      inputAxis: { value: new Vector2(), initialTrigger: false },
-      touchAxis: { value: new Vector2(), initialTrigger: false, held: false }
     }
 
     this._renderer.setSize(window.innerWidth, window.innerHeight);
@@ -85,10 +67,14 @@ export class MeshTest extends Renderer {
     scene.add(this._point.object);
 
     const inputCallback = (event: any) => {
-      this.onInput(event.type, new Vector2(event.clientX, event.clientY), event);
+      this._input.onInput({ 
+        type: event.type, 
+        screenPosition: new Vector2(event.clientX, event.clientY),
+        event
+      });
     }
 
-    this._clearEvents = addWindowEvents(inputCallback, 'mousemove', 'click', 'touch', 'keydown', 'keyup');
+    this._clearEvents = addWindowEvents(inputCallback, ...this._input.EventMap);
 
     this._renderer.setAnimationLoop(() => {
       this.animate(this._state.clock.getDelta());
@@ -114,39 +100,7 @@ export class MeshTest extends Renderer {
   }
 
   protected onInput(type: 'mousemove' | 'click' | 'touch' | 'keydown' | 'keyup', screenPosition: Vector2, event: any) {
-    this._inputs.inputAxis.initialTrigger = false;
-    this._inputs.touchAxis.initialTrigger = false;
 
-    // const getWASD = () => {
-    //   return VectorFromWASD(
-    //     this._keys['KeyW']?.value, 
-    //     this._keys['KeyA']?.value, 
-    //     this._keys['KeyS']?.value, 
-    //     this._keys['KeyD']?.value
-    //   );
-    // }
-
-    // const onKey = (code: string, down: boolean, addCount: number) => {
-    //   this._keys[code] = { value: down, count: (this._keys[code]?.count ?? 0) + addCount }
-    //   if(['KeyW', 'KeyA', 'KeyS', 'KeyD'].includes(event.code)) {
-    //     this._inputs.inputAxis = { value: getWASD(), initialTrigger: true }
-    //   }
-    // }
-
-    switch(type) {
-      case 'mousemove':
-        break;
-      case 'click':
-        break;
-      case 'touch':
-        break;
-      case 'keydown':
-        // onKey(event.code, true, 1);
-        break;
-      case 'keyup':
-        // onKey(event.code, false, 0);
-        break;
-    }
   }
 
   public addCamera(key: string, camera: Camera) {
