@@ -28,7 +28,8 @@ export class GameEngine implements Engine {
 
     const meshes = map.getTerrainMesh();
     console.log("Terrain Mesh:", meshes)
-    scene.add(...meshes);
+    if(meshes.length > 0)
+      scene.add(...meshes);
 
     this.renderer.addScene("default_terrain", scene);
     this.renderer.setActiveScene("default_terrain");

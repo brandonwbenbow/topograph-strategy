@@ -1,4 +1,4 @@
-import { BufferGeometry, Object3D, Vector3, BatchedMesh } from "three";
+import { BufferGeometry, Object3D, Vector3, BatchedMesh, Vector2 } from "three";
 import { SimplexNoise } from "three/examples/jsm/Addons.js";
 
 /**
@@ -11,6 +11,9 @@ export class TerrainManager {
 
   public async generateTerrainMap() {
     this.currentTerrainMap = new TerrainMap();
+
+
+
     return this.currentTerrainMap;
   }
 }
@@ -39,17 +42,21 @@ export class TerrainMap {
 export class Terrain extends Object3D {
   private mesh: BatchedMesh;
   private noise: MapNoise;
+  private offset: Vector2;
+  private dimensions: Vector2;
 
   static generateMeshFromNoise(noise: MapNoise, maxTileCount: number = 100) {
     return new BatchedMesh(maxTileCount, noise.getMeshScale() * maxTileCount);
   }
 
-  constructor({ pos, mesh, noise }: { pos: Vector3, mesh?: BatchedMesh, noise?: MapNoise }) {
+  constructor({ pos, mesh, noise, offset, dimensions }: { pos: Vector3, mesh?: BatchedMesh, noise?: MapNoise, offset?: Vector2, dimensions?: Vector2 }) {
     super();
 
     const defaultLayers: NoiseLayerSettings[] = [{ terrain: { offset: pos, scale: new Vector3(1, 1, 1), weight: 1 } }]
     this.noise = noise ?? new MapNoise({ layers: defaultLayers });
     this.mesh = mesh ?? Terrain.generateMeshFromNoise(this.noise);
+    this.offset = offset ?? new Vector2(0, 0);
+    this.dimensions = dimensions ?? new Vector2(1, 1);
   }
 
   public getMesh() { return this.mesh; }
